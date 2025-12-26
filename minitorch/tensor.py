@@ -1,5 +1,5 @@
 import numpy as np
-from ops import Add,Sub,Mul,Matmul
+from minitorch.operations import Add,Sub,Mul,Matmul
 
 # This is the core of the minitorch,the central to manage the data.
 class Tensor:
