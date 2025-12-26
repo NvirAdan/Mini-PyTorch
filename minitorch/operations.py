@@ -28,7 +28,7 @@ class Function:
         # Save the context object for the backward of the respective class
         ctx = cls(*tensors) #unpack the tensors
 
-
+        
         #Take only the numpy array(the tensor "naked")
         input_data = [t.data for t in tensors]
 
@@ -43,6 +43,9 @@ class Function:
 
         #Save the context used to get the result
         result._ctx = ctx 
+
+        #Assing gradient if one the parents requires gradient
+        result._requires_grad = any(t.requires_grad for t in tensors)
 
         return result
 
@@ -124,7 +127,7 @@ class Mul(Function):
         x, y = self.saved_parents
 
         # The derivative of X is Y and the derivative of Y is X
-        return grad_output * y,grad_output * x
+        return grad_output * y.data,grad_output * x.data
     
 
 
@@ -144,10 +147,11 @@ class Matmul(Function):
 
         x, y = self.saved_parents
 
-        #Don´t forget the Transpose in order to actually be able to do the operation
-        grad_x = grad_output @ y.T
+        #Don´t forget the Transpose in order to actually be able to do the operation.
+        #Like in the backward  of the Mul class we need the data inside the Tensor.
+        grad_x = grad_output @ y.data.T
 
-        grad_y = x.T @ grad_output
+        grad_y = x.data.T @ grad_output
 
         return grad_x,grad_y
     
