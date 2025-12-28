@@ -182,3 +182,25 @@ class ReLU(Function):
 
         return grad_x
     
+
+class Sum(Function):
+
+    def foward(self, input_data):
+
+        x = input_data[0]#
+        
+        # We save only the original form
+        self.save_for_backward(x.shape)
+        
+        #Make a list of the summatory and then a numpy array of it
+        return np.array([np.sum(x)])
+    
+    def backward(self, grad_output):
+        
+        # Get back the original form of the tensor before the summatory.
+        x_shape = self.saved_parents[0]
+
+        # Make a grid of 1s with the form of the tuple  and multiply it by the gradient.
+        return np.ones(x_shape) * grad_output
+
+    
