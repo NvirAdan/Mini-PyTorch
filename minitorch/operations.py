@@ -30,7 +30,7 @@ class Function:
 
         
         #Take only the numpy array(the tensor "naked")
-        input_data = [t.data for t in tensors]
+        input_data = [t.data if isinstance(t, Tensor)else t for t in tensors]#To avoid issues with .data fo the arguments
 
 
         #foward of the respective class with the np.array
@@ -203,4 +203,133 @@ class Sum(Function):
         # Make a grid of 1s with the form of the tuple  and multiply it by the gradient.
         return np.ones(x_shape) * grad_output
 
+
+
+class Reshape(Function):
+
+    def foward(self, input_data):
+
+        # This is the current form of the data
+        x_data = input_data[0]
+
+        
+        #This is the new shape that we want
+        new_shape = input_data[1]
+
+        
+        #We save the original form
+        self.save_for_backward(x_data.shape)
+
+        
+        # And retrieve the new form of the data
+        return x_data.reshape(new_shape)
+
+
+    def backward(self, grad_output): 
+
+        #We take back the original for of the data from the parents
+        original_shape = self.saved_parents[0]
+
+
+        # And the "derivative" of the gradient is just the original form
+        return grad_output.reshape(original_shape), None # Because we use tuples for the tensor.backward()
+
+
+
+class Transpose(Function):
+
+    def foward(self, input_data):
+
+        #We take the current form
+        x_data = input_data[0]
+
+        #We save it(not actually needed but for a just in case scenario)
+        self.save_for_backward(x_data.shape)
+
+
+        # And return the transpose 
+        return x_data.T
+    
+
+
+    
+    def backward(self, grad_output):
+
+        #And the "derivative" its just another Transpose
+        return grad_output.T
+    
+    
+
+
+class Softmax(Function):
+
+    def foward(self, input_data):
+
+        # First we take the data
+        x_data = input_data[0]
+
+        #If the numbers are too high,exp explodes
+        # for that reason we take the highest number inside our data
+        x_max = np.max(x_data, axis= -1, keepdims=True)
+
+        #And substract it to the rest in order to do the exponentiation
+        e_numbers = np.exp(x_data - x_max)
+
+
+        #Now the result is only the exponents divided by the summatory of the exponents
+        out = e_numbers / np.sum(e_numbers, axis= -1, keepdims=True)
+
+
+        #as always Save the result
+        self.save_for_backward(out)
+
+        # And return it
+        return out
+    
+
+    def backward(self, grad_output):
+
+        #Take back the parents
+        out = self.saved_parents[0]
+
+
+        # The derivative is just the summatory of the gradient multiplied by the out of softmax in the foward pass
+        summatory_grad_and_out = np.sum(grad_output * out ,axis = -1, keepdims=True)
+
+        #And then to that we do the out of softmax multiplied by the gradient subtracted by the previous summatory
+        x_grad = out * (grad_output - summatory_grad_and_out)
+
+        # and return it
+        return x_grad
+    
+
+
+
+class Pow(Function):
+
+    def foward(self, input_data):
+
+        # Our current value
+        x = input_data[0]
+
+        #The value that we want to apply
+        n = input_data[1]
+
+
+        #Save them
+
+        self.save_for_backward(x, n)
+
+        # return the potentiation
+        return x ** n
+    
+    def backward(self, grad_output):
+
+        #Take the parents back
+        x, n = self.saved_parents
+
+        # The derivative of x^n is n * x^(n-1) for the conmmutation rule
+
+        return grad_output * (n * (x ** (n-1))), None # Because we use tuples
+    
     
