@@ -21,7 +21,7 @@ class Function:
     
     @classmethod  #Makes apply use foward and backward of the respective class that have invoked it
     def apply(cls, *tensors):
-        from tensor import Tensor # This is intentional to avoid circular importation
+        from .tensor import Tensor # This is intentional to avoid circular importation
 
 
 
@@ -45,7 +45,7 @@ class Function:
         result._ctx = ctx 
 
         #Assing gradient if one the parents requires gradient
-        result._requires_grad = any(t.requires_grad for t in tensors)
+        result.requires_grad = any(t.requires_grad for t in tensors)
 
         return result
 
@@ -86,6 +86,14 @@ class Add(Function):
     
     def backward(self, grad_output):
 
+        #Alwarys check th gradient because if it is None it will spread like a virus through backprop
+        if grad_output is None:
+            return None, None
+        
+
+
+
+
         # Addition "spread" the gradient equally
         return grad_output,grad_output
     
@@ -104,6 +112,14 @@ class Sub(Function):
     
     
     def backward(self, grad_output):
+
+        #Check grad
+        if grad_output is None:
+            return None,None
+        
+
+
+
 
         # x - y    =>   dx = 1   ;   dy = -1 
         return grad_output, -grad_output
@@ -124,10 +140,17 @@ class Mul(Function):
     
     def backward(self,grad_output):
 
+        #Check gradient
+        if grad_output is None:
+            return None,None
+        
+
+
+
         x, y = self.saved_parents
 
         # The derivative of X is Y and the derivative of Y is X
-        return grad_output * y.data,grad_output * x.data
+        return grad_output * y,grad_output * x
     
 
 
@@ -145,13 +168,20 @@ class Matmul(Function):
     
     def backward(self, grad_output):
 
+        #Check gradient
+        if grad_output is None:
+            return None, None
+
+
+
+
         x, y = self.saved_parents
 
         #Don´t forget the Transpose in order to actually be able to do the operation.
         #Like in the backward  of the Mul class we need the data inside the Tensor.
-        grad_x = grad_output @ y.data.T
+        grad_x = grad_output @ y.T
 
-        grad_y = x.data.T @ grad_output
+        grad_y = x.T @ grad_output
 
         return grad_x,grad_y
     
@@ -172,6 +202,13 @@ class ReLU(Function):
     
     def backward(self, grad_output):
 
+        # Check Gradient but the operation that only have 1 parent gives back just 1 None
+        if grad_output is None:
+            return None
+        
+
+
+
         # Just one because ReLU only have one parent
         x = self.saved_parents[0]
 
@@ -190,18 +227,26 @@ class Sum(Function):
         x = input_data[0]#
         
         # We save only the original form
-        self.save_for_backward(x.shape)
+        self.save_for_backward(x)
         
         #Make a list of the summatory and then a numpy array of it
         return np.array([np.sum(x)])
     
     def backward(self, grad_output):
+
+        #Check Gradient
+        if grad_output is None:
+            return None
+        
+
+
+
         
         # Get back the original form of the tensor before the summatory.
-        x_shape = self.saved_parents[0]
+        x = self.saved_parents[0]
 
         # Make a grid of 1s with the form of the tuple  and multiply it by the gradient.
-        return np.ones(x_shape) * grad_output
+        return np.ones(x.shape) * grad_output[0]
 
 
 
@@ -226,6 +271,13 @@ class Reshape(Function):
 
 
     def backward(self, grad_output): 
+
+        #Check Gradient
+        if grad_output is None:
+            return None,None
+        
+
+
 
         #We take back the original for of the data from the parents
         original_shape = self.saved_parents[0]
@@ -254,6 +306,13 @@ class Transpose(Function):
 
     
     def backward(self, grad_output):
+
+        #Check Gradient
+        if grad_output is None:
+            return None
+        
+
+
 
         #And the "derivative" its just another Transpose
         return grad_output.T
@@ -288,6 +347,16 @@ class Softmax(Function):
     
 
     def backward(self, grad_output):
+
+        #Check Gradient
+        if grad_output is None:
+            return None
+        
+
+
+
+
+
 
         #Take back the parents
         out = self.saved_parents[0]
@@ -324,6 +393,16 @@ class Pow(Function):
         return x ** n
     
     def backward(self, grad_output):
+
+
+        #Check Gradient
+        if grad_output is None:
+            return None,None
+        
+
+
+
+
 
         #Take the parents back
         x, n = self.saved_parents

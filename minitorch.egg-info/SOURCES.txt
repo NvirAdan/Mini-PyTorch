@@ -1,5 +1,7 @@
+README.md
 setup.py
 minitorch/__init__.py
+minitorch/operations.py
 minitorch/tensor.py
 minitorch.egg-info/PKG-INFO
 minitorch.egg-info/SOURCES.txt
@@ -7,4 +9,6 @@ minitorch.egg-info/dependency_links.txt
 minitorch.egg-info/requires.txt
 minitorch.egg-info/top_level.txt
 minitorch/nn/__init__.py
+minitorch/nn/module.py
 minitorch/optim/__init__.py
+minitorch/optim/optimazer.py

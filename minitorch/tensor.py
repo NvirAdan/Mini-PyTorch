@@ -1,5 +1,5 @@
 import numpy as np
-from operations import Add,Sub,Mul,Matmul,Sum,Reshape,Transpose,Softmax,Pow
+
 
 # This is the core of the minitorch,the central to manage the data.
 class Tensor:
@@ -23,6 +23,10 @@ class Tensor:
     
     # Mathematical operations for the Tensor that we have created
     def __add__(self,other):
+
+        #Local Importations to avoid issues
+        from .operations import Add
+
         #Check if is a Tensor,if not make it.
         if not isinstance(other, Tensor):
             other = Tensor(other)
@@ -33,6 +37,10 @@ class Tensor:
     
     
     def __sub__(self, other):
+        
+        from .operations import Sub
+
+
         if not isinstance(other, Tensor):
             other = Tensor(other)
         
@@ -41,6 +49,10 @@ class Tensor:
     
     
     def __mul__(self, other):
+
+        from .operations import Mul
+
+
         if not isinstance(other, Tensor):
             other = Tensor(other)
         
@@ -49,6 +61,10 @@ class Tensor:
     
     
     def __matmul__(self, other):
+
+        from .operations import Matmul
+
+
         if not isinstance(other, Tensor):
             other = Tensor(other)
         
@@ -57,6 +73,10 @@ class Tensor:
     
     
     def __pow__(self, n):
+
+        from .operations import Pow
+
+
         #Doesn't need to check if is a tensor it can handle it
         return Pow.apply(self, n)
     
@@ -64,6 +84,10 @@ class Tensor:
     
     
     def sum(self):
+
+        from .operations import Sum
+
+
         #This doesn't need to prove that is a tensor like the other ones.
 
         return Sum.apply(self)
@@ -72,11 +96,15 @@ class Tensor:
     
     def reshape(self,new_shape):
 
+        from .operations import Reshape
+
         return Reshape.apply(self,new_shape)
     
 
 
     def Transpose(self):
+
+        from .operations import Transpose
 
 
         return Transpose.apply(self)
@@ -90,6 +118,8 @@ class Tensor:
     
     
     def Softmax(self):
+
+        from .operations import Softmax
 
         return Softmax.apply(self)
     
@@ -153,29 +183,30 @@ class Tensor:
 
         #We gonna follow the topo but in reverse (because is a backpropagation)
         for t in reversed(topo):
+            
             #If the tensor was created by a class(por example:Add,Sub)
             if t._ctx is not None:
                 
                 #We call its respective backward of the class
                 grads = t._ctx.backward(t.grad)
 
-            #Making sure it is a Tuple because in the backprop of the tensor I only use tuples
-            if not isinstance(grads, tuple):
-                grads = (grads,)
+                #Making sure it is a Tuple because in the backprop of the tensor I only use tuples
+                if not isinstance(grads, tuple):
+                    grads = (grads,)
                 
-            # We zip it the current "node/tensor" in the topo and its respective grads
-            # in order for every operations have the parent and the gradient.
-            for parent,g in zip(t._ctx.parents, grads):
-                #Self explanatory but is specifically needed for it to know when to stop
-                if parent.requires_grad:
-                    
-                    if parent.grad is None:
+                # We zip it the current "node/tensor" in the topo and its respective grads
+                # in order for every operations have the parent and the gradient.
+                for parent,g in zip(t._ctx.parents, grads):
+                    #Self explanatory but is specifically needed for it to know when to stop
+                    if isinstance(parent, Tensor) and parent.requires_grad and g is not None:
                         
-                        #If it doesn't have gradient first we create the "container"
-                        parent.grad = np.zeros_like(parent.data)
+                        if parent.grad is None:
+                        
+                            #If it doesn't have gradient first we create the "container"
+                            parent.grad = np.zeros_like(parent.data)
 
-                    #Know the fill the container with the gradient (+= is important to not overlap)
-                    parent.grad += g
+                        #Know the fill the container with the gradient (+= is important to not overlap)
+                        parent.grad += g
                 
 
             
