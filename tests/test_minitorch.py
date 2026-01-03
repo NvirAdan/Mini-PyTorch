@@ -1,7 +1,7 @@
 import numpy as np 
 import torch
 from minitorch import Tensor
-from minitorch.optim import Adam
+
 
 def test_python_and_minitorch():
 

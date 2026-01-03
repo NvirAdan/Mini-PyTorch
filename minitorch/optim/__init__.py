@@ -1,1 +1,1 @@
-from .optimazer import SGD,Adam
+from .optimizer import SGD,Adam
