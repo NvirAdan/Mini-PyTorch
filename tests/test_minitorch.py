@@ -22,7 +22,7 @@ def test_python_and_minitorch():
 
     #Foward
     z = (a @ b + c).Softmax()
-    loss = z.sum()
+    loss = z.Sum()
 
     #Backward
     loss.backward()
