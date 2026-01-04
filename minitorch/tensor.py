@@ -81,9 +81,16 @@ class Tensor:
         return Pow.apply(self, n)
     
     
+
+    def ReLU(self):
+
+        from .operations import ReLU
+
+        return ReLU.apply(self)
     
     
-    def sum(self):
+    
+    def Sum(self):
 
         from .operations import Sum
 
@@ -94,7 +101,7 @@ class Tensor:
     
     
     
-    def reshape(self,new_shape):
+    def Reshape(self,new_shape):
 
         from .operations import Reshape
 
@@ -124,6 +131,13 @@ class Tensor:
         return Softmax.apply(self)
     
     
+
+    
+    def Log(self):
+
+        from .operations import Log
+
+        return Log.apply(self)
     
     
     
@@ -206,6 +220,7 @@ class Tensor:
                             parent.grad = np.zeros_like(parent.data)
 
                         #Know the fill the container with the gradient (+= is important to not overlap)
+                        #(This line also can cause broadcasting errors without the intervention of the unbroadcasting function)
                         parent.grad += g
                 
 

@@ -66,6 +66,47 @@ class Function:
 
 
 
+#Complicated to simplified 
+
+
+# This is key to avoid broadcasting errors,these broadcasting are different to the ones
+# that numpy manages,these errors appears before reaching numpy.
+def unbroadcast(grad,original_shape):
+    
+    # First colapse, we sum the "extra dimensions" that comes in the gradient in order
+    # to be able to have the same dimensions(original shape) of the parent_tensor
+    while len(grad.shape) > len(original_shape):
+        # the while is just in the case that the gradient is a tensor4D (for example) and the parent is
+        # a tensor2D it will keep colapsing until reach the same dimensions as the parent.
+        
+        
+        # the summatory of the dimensions is the new value of the dimension,always respecting the position.
+        grad = grad.sum(axis=0)
+
+
+    
+    # Second colapse,the first colapse make them have the same dimensions,this one make them have the same
+    # value in every dimension for example(parent_dim(1,512) and gradient(10,512))this will colapse the 10 of the gradient
+    # into 1 to make them have the same value. 
+    for i,dim in enumerate(original_shape):
+        
+        
+        # if the original value in the parent is 1 we can asumme that numpy streched the value in the foward pass
+        if dim == 1:
+            
+            
+            # imagine a excel sheet,here in every column we sum all the values of the rows in that column to make one row
+            # with that sum of values
+            grad = grad.sum(axis=i, keepdims=True)
+
+    
+    # now just return the tensor
+    return grad
+
+
+
+
+
 
 
 class Add(Function):
@@ -77,8 +118,8 @@ class Add(Function):
         x, y = input_data
 
 
-        #we save in the list the tensor used
-        self.save_for_backward(x,y)
+        #we save in the list the tensor used (shape for unbroadcasting)
+        self.save_for_backward(x.shape,y.shape)
         
 
         return x + y
@@ -90,12 +131,12 @@ class Add(Function):
         if grad_output is None:
             return None, None
         
-
-
+        # Get the original_shapes
+        x_shape, y_shape = self.saved_parents
 
 
         # Addition "spread" the gradient equally
-        return grad_output,grad_output
+        return unbroadcast(grad_output,x_shape),unbroadcast(grad_output,y_shape)
     
 
 
@@ -104,9 +145,11 @@ class Sub(Function):
     
     def foward(self,input_data):
 
+        #Extract the values
         x, y = input_data
 
-        self.save_for_backward(x,y)
+        #Save for backward (shape for unbrocasting)
+        self.save_for_backward(x.shape,y.shape)
 
         return x - y
     
@@ -118,11 +161,12 @@ class Sub(Function):
             return None,None
         
 
-
+        # Get the original_shapes
+        x_shape , y_shape = self.saved_parents
 
 
         # x - y    =>   dx = 1   ;   dy = -1 
-        return grad_output, -grad_output
+        return unbroadcast(grad_output,x_shape), unbroadcast(-grad_output,y_shape) #unbroadcasting
     
 
 
@@ -131,10 +175,13 @@ class Mul(Function):
     
     def foward(self, input_data):
 
+        # Extract data
         x, y = input_data
 
+        #Save for backward (we need the data to not onlythe shape like Add or Sub)
         self.save_for_backward(x,y)
 
+        
         return x * y
     
     
@@ -145,12 +192,17 @@ class Mul(Function):
             return None,None
         
 
-
-
+        # Extract the parents
         x, y = self.saved_parents
 
+        
         # The derivative of X is Y and the derivative of Y is X
-        return grad_output * y,grad_output * x
+        x_grad = grad_output * y
+        y_grad = grad_output * x
+        
+        
+        #returning Unbroadcasted tensor(we only pass the shape to the unbroadcast function)
+        return unbroadcast(x_grad,x.shape), unbroadcast(y_grad,y.shape) 
     
 
 
@@ -159,9 +211,12 @@ class Matmul(Function):
     
     def foward(self,input_data):
 
+        #Extract data
         x, y = input_data
 
+        #save for backward (don´t need unbroadcasting)
         self.save_for_backward(x,y)
+
 
         return x @ y 
     
@@ -174,7 +229,7 @@ class Matmul(Function):
 
 
 
-
+        # Get parents
         x, y = self.saved_parents
 
         #Don´t forget the Transpose in order to actually be able to do the operation.
@@ -224,7 +279,7 @@ class Sum(Function):
 
     def foward(self, input_data):
 
-        x = input_data[0]#
+        x = input_data[0]
         
         # We save only the original form
         self.save_for_backward(x)
@@ -412,3 +467,35 @@ class Pow(Function):
         return grad_output * (n * (x ** (n-1))), None # Because we use tuples
     
     
+
+class Log(Function):
+
+    def foward(self,input_data):
+
+        #We take the value
+        x = input_data[0]
+
+        #Then we save it
+        self.save_for_backward(x)
+
+        #This is only to avoid log(0) which is -infinite
+        eps = 1e-15
+
+        return np.log(x + eps)
+    
+
+    def backward(self, grad_output):
+
+        #Check the gradient
+        if grad_output is None:
+            return None
+        
+        #Extract the value
+        x = self.saved_parents[0]
+
+        #Again, to avoid issues
+        eps = 1e-15
+        
+        
+        #The derivate of log(x) is 1/x
+        return grad_output/(x + eps)
