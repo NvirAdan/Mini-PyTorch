@@ -277,31 +277,45 @@ class ReLU(Function):
 
 class Sum(Function):
 
-    def foward(self, input_data):
+    def forward(self, input_data, axis = None, keepdims = None):
 
         x = input_data[0]
+
+        # set the variables axis and keepdims as an atribute of Sum
+        self.axis = axis
+        self.keepdims = keepdims
         
         # We save only the original form
         self.save_for_backward(x)
         
-        #Make a list of the summatory and then a numpy array of it
-        return np.array([np.sum(x)])
+        #return the summatory using numpy with the parameters that we pass to it
+        return np.sum(x, axis = self.axis, keepdims = self.keepdims)
+    
     
     def backward(self, grad_output):
 
         #Check Gradient
         if grad_output is None:
             return None
-        
-
-
-
-        
+              
         # Get back the original form of the tensor before the summatory.
         x = self.saved_parents[0]
 
+        # If keepdims was False and you lost the axis you need to convert it
+        # for numpy to be able to broadcast.
+        if not self.keepdims and self.axis is not None:
+            
+            #This reinserts the axis in order to match with x.shape
+            grad_reshape = np.expand_dims(grad_output, self.axis)
+
+        else:
+            
+            #if you didn't lose the dims and axis you're fine.
+            grad_reshape = grad_output
+
+
         # Make a grid of 1s with the form of the tuple  and multiply it by the gradient.
-        return np.ones(x.shape) * grad_output[0]
+        return np.ones(x.shape) * grad_reshape
 
 
 
