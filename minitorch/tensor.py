@@ -90,14 +90,14 @@ class Tensor:
     
     
     
-    def Sum(self):
+    def Sum(self, axis = None, keepdims = None):
 
         from .operations import Sum
 
 
         #This doesn't need to prove that is a tensor like the other ones.
 
-        return Sum.apply(self)
+        return Sum.apply(self, axis = axis, keepdims = keepdims)
     
     
     

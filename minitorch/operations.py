@@ -283,7 +283,7 @@ class Sum(Function):
 
         # set the variables axis and keepdims as an atribute of Sum
         self.axis = axis
-        self.keepdims = keepdims
+        self.keepdims = keepdims if keepdims is not None else False #Just in case, python is a mf sometimes.
         
         # We save only the original form
         self.save_for_backward(x)
