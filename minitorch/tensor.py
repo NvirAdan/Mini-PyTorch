@@ -213,6 +213,10 @@ class Tensor:
                 for parent,g in zip(t._ctx.parents, grads):
                     #Self explanatory but is specifically needed for it to know when to stop
                     if isinstance(parent, Tensor) and parent.requires_grad and g is not None:
+
+                        from .operations import unbroadcast
+
+                        g_fixed = unbroadcast(g, parent.data.shape)
                         
                         if parent.grad is None:
                         
@@ -221,7 +225,7 @@ class Tensor:
 
                         #Know the fill the container with the gradient (+= is important to not overlap)
                         #(This line also can cause broadcasting errors without the intervention of the unbroadcasting function)
-                        parent.grad += g
+                        parent.grad += g_fixed
                 
 
             
