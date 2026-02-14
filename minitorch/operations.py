@@ -234,9 +234,9 @@ class Matmul(Function):
 
         #Don´t forget the Transpose in order to actually be able to do the operation.
         #Like in the backward  of the Mul class we need the data inside the Tensor.
-        grad_x = grad_output @ y.T
+        grad_x = grad_output @ np.swapaxes(y, -1, -2)
 
-        grad_y = x.T @ grad_output
+        grad_y = np.swapaxes(x, -1, -2) @ grad_output
 
         return grad_x,grad_y
     
