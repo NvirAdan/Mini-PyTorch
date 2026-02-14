@@ -149,7 +149,7 @@ class Sub(Function):
         x, y = input_data
 
         #Save for backward (shape for unbrocasting)
-        self.save_for_backward(x.shape,y.shape)
+        self.save_for_backward(np.shape(x), np.shape(y))
 
         return x - y
     
@@ -178,8 +178,8 @@ class Mul(Function):
         # Extract data
         x, y = input_data
 
-        #Save for backward (we need the data to not onlythe shape like Add or Sub)
-        self.save_for_backward(x,y)
+        #Save for backward (we need the data, not only the shape like Add or Sub)
+        self.save_for_backward( x, y, np.shape(x), np.shape(y) )
 
         
         return x * y
@@ -193,7 +193,7 @@ class Mul(Function):
         
 
         # Extract the parents
-        x, y = self.saved_parents
+        x, y , x_shape, y_shape= self.saved_parents
 
         
         # The derivative of X is Y and the derivative of Y is X
@@ -202,7 +202,7 @@ class Mul(Function):
         
         
         #returning Unbroadcasted tensor(we only pass the shape to the unbroadcast function)
-        return unbroadcast(x_grad,x.shape), unbroadcast(y_grad,y.shape) 
+        return unbroadcast(x_grad,x_shape), unbroadcast(y_grad,y_shape) 
     
 
 
@@ -332,7 +332,7 @@ class Reshape(Function):
 
         
         #We save the original form
-        self.save_for_backward(x_data.shape)
+        self.save_for_backward( np.shape(x_data) )
 
         
         # And retrieve the new form of the data
@@ -365,7 +365,7 @@ class Transpose(Function):
         x_data = input_data[0]
 
         #We save it(not actually needed but for a just in case scenario)
-        self.save_for_backward(x_data.shape)
+        self.save_for_backward( np.shape(x_data) )
 
 
         # And return the transpose 
