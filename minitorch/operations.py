@@ -112,14 +112,14 @@ def unbroadcast(grad,original_shape):
 class Add(Function):
 
    
-    def forward(self,input_data):
+    def forward(self,input_data, **kwargs):
 
         #Take the values
         x, y = input_data
 
 
         #we save in the list the tensor used (shape for unbroadcasting)
-        self.save_for_backward(x.shape,y.shape)
+        self.save_for_backward(np.shape(x), np.shape(y))
         
 
         return x + y
