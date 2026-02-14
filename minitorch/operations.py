@@ -20,7 +20,7 @@ class Function:
     
     
     @classmethod  #Makes apply use foward and backward of the respective class that have invoked it
-    def apply(cls, *tensors):
+    def apply(cls, *tensors, **kwargs):
         from .tensor import Tensor # This is intentional to avoid circular importation
 
 
@@ -34,7 +34,7 @@ class Function:
 
 
         #foward of the respective class with the np.array
-        output_data = ctx.foward(input_data)
+        output_data = ctx.forward(input_data, **kwargs) # Without  **kwargs , Sum(axis) generates a problem.
 
         
         #Make it Tensor again
@@ -55,7 +55,7 @@ class Function:
     #Raise an Error if you didn't wrote the code for the class
     # A "Just In Case" functionality
     
-    def foward(self, *args):
+    def forward(self, *args):
         raise NotImplementedError("Olvidaste el Foward")
     
     
@@ -112,7 +112,7 @@ def unbroadcast(grad,original_shape):
 class Add(Function):
 
    
-    def foward(self,input_data):
+    def forward(self,input_data):
 
         #Take the values
         x, y = input_data
@@ -143,7 +143,7 @@ class Add(Function):
 class Sub(Function):
 
     
-    def foward(self,input_data):
+    def forward(self,input_data):
 
         #Extract the values
         x, y = input_data
@@ -173,7 +173,7 @@ class Sub(Function):
 class Mul(Function):
 
     
-    def foward(self, input_data):
+    def forward(self, input_data):
 
         # Extract data
         x, y = input_data
@@ -209,7 +209,7 @@ class Mul(Function):
 class Matmul(Function):
 
     
-    def foward(self,input_data):
+    def forward(self,input_data):
 
         #Extract data
         x, y = input_data
@@ -245,7 +245,7 @@ class Matmul(Function):
 class ReLU(Function):
 
     
-    def foward(self,input_data):
+    def forward(self,input_data):
         
         # we just need one tensor
         x = input_data[0]
@@ -321,7 +321,7 @@ class Sum(Function):
 
 class Reshape(Function):
 
-    def foward(self, input_data):
+    def forward(self, input_data):
 
         # This is the current form of the data
         x_data = input_data[0]
@@ -359,7 +359,7 @@ class Reshape(Function):
 
 class Transpose(Function):
 
-    def foward(self, input_data):
+    def forward(self, input_data):
 
         #We take the current form
         x_data = input_data[0]
@@ -391,7 +391,7 @@ class Transpose(Function):
 
 class Softmax(Function):
 
-    def foward(self, input_data):
+    def forward(self, input_data):
 
         # First we take the data
         x_data = input_data[0]
@@ -445,7 +445,7 @@ class Softmax(Function):
 
 class Pow(Function):
 
-    def foward(self, input_data):
+    def forward(self, input_data):
 
         # Our current value
         x = input_data[0]
@@ -484,7 +484,7 @@ class Pow(Function):
 
 class Log(Function):
 
-    def foward(self,input_data):
+    def forward(self,input_data):
 
         #We take the value
         x = input_data[0]
